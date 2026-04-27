@@ -44,13 +44,8 @@ export function ConfidenceChart({ items = [] }) {
   const sorted = [...items]
     .map((item) => ({
       ...item,
-      confidence:
-        typeof item.confidence === "number"
-          ? item.confidence
-          : item.unit_price > 0
-            ? 0.85
-            : 0.6,
     }))
+    .filter((item) => typeof item.confidence === "number")
     .sort((a, b) => b.confidence - a.confidence);
 
   if (!sorted.length) return null;

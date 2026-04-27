@@ -181,27 +181,36 @@ class StaticSceneCheckout:
         confirmed = self._get_confirmed()
         items = []
         total = 0.0
-        for label, qty in sorted(confirmed.items()):
-            unit = self.prices.get(label, 0.0)
-            sub = round(unit * qty, 3)
-            total += sub
-            items.append({"label": label, "qty": qty, "unit_price": unit, "subtotal": sub})
 
-        # Build diagnostics for tuning
         diagnostics = []
+        diagnostics_by_label: dict[str, dict] = {}
         for cls, conf_list in sorted(self._class_conf_history.items(), key=lambda x: -len(x[1])):
             label = self.model.names[cls]
             min_f = self._min_frames(label)
             min_c = self._conf_threshold(label)
             avg_c = float(np.mean(conf_list)) if conf_list else 0.0
             status = "OK" if len(conf_list) >= min_f else "X (needs tuning)"
-            diagnostics.append({
+            summary = {
                 "label": label,
                 "frame_hits": len(conf_list),
                 "avg_confidence": round(avg_c, 3),
                 "min_required_frames": min_f,
                 "min_required_confidence": min_c,
                 "status": status,
+            }
+            diagnostics.append(summary)
+            diagnostics_by_label[label] = summary
+
+        for label, qty in sorted(confirmed.items()):
+            unit = self.prices.get(label, 0.0)
+            sub = round(unit * qty, 3)
+            total += sub
+            items.append({
+                "label": label,
+                "qty": qty,
+                "unit_price": unit,
+                "subtotal": sub,
+                "confidence": diagnostics_by_label.get(label, {}).get("avg_confidence"),
             })
 
         # Print verbose diagnostics if enabled

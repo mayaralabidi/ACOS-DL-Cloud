@@ -86,23 +86,28 @@ export function CheckoutPage() {
   usePolling(isProcessing, 2000, pollCallback);
 
   const confidenceItems = useMemo(() => {
-    const fromRaw = session?.receipt_raw?.items;
-    if (Array.isArray(fromRaw) && fromRaw.length) {
-      return fromRaw.map((item) => ({
-        label: item.label,
-        confidence:
+    const rawItems = session?.receipt_raw?.items || [];
+    const diagnostics = session?.receipt_raw?.diagnostics || [];
+    const diagnosticByLabel = new Map(
+      diagnostics.map((entry) => [entry.label, entry]),
+    );
+
+    return rawItems
+      .map((item) => {
+        const diagnostic = diagnosticByLabel.get(item.label);
+        const confidence =
           typeof item.confidence === "number"
             ? item.confidence
-            : item.unit_price > 0
-              ? 0.85
-              : 0.6,
-      }));
-    }
+            : typeof diagnostic?.avg_confidence === "number"
+              ? diagnostic.avg_confidence
+              : null;
 
-    return (session?.receipt_items || []).map((item) => ({
-      label: item.label,
-      confidence: item.unit_price > 0 ? 0.85 : 0.6,
-    }));
+        return {
+          label: item.label,
+          confidence,
+        };
+      })
+      .filter((item) => typeof item.confidence === "number");
   }, [session]);
 
   const metrics = {

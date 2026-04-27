@@ -17,6 +17,7 @@ class ReceiptItemSchema(BaseModel):
     unit_price: float
     subtotal: float
     is_override: bool = False
+    confidence: float | None = None
 
 
 class SessionResponse(BaseModel):
@@ -25,6 +26,7 @@ class SessionResponse(BaseModel):
     total: float
     frame_count: int
     model_version: str
+    receipt_raw: dict | None = None
     receipt_items: list[ReceiptItemSchema] = []
     error: str | None = None
     created_at: datetime

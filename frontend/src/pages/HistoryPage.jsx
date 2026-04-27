@@ -145,6 +145,31 @@ export function HistoryPage() {
     };
   }, []);
 
+  const confidenceItems = sessions
+    .flatMap((session) => {
+      const rawItems = session.receipt_raw?.items || [];
+      const diagnostics = session.receipt_raw?.diagnostics || [];
+      const diagnosticByLabel = new Map(
+        diagnostics.map((entry) => [entry.label, entry]),
+      );
+
+      return rawItems.map((item) => {
+        const diagnostic = diagnosticByLabel.get(item.label);
+        const confidence =
+          typeof item.confidence === "number"
+            ? item.confidence
+            : typeof diagnostic?.avg_confidence === "number"
+              ? diagnostic.avg_confidence
+              : null;
+
+        return {
+          label: item.label,
+          confidence,
+        };
+      });
+    })
+    .filter((item) => typeof item.confidence === "number");
+
   useEffect(() => {
     let mounted = true;
     const baseUrl =
@@ -178,161 +203,207 @@ export function HistoryPage() {
         {error ? <p className="history-state error">{error}</p> : null}
 
         {!loading && !error ? (
-          <div className="surface-card" style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr
-                  style={{
-                    borderBottom: "1px solid var(--border)",
-                    textAlign: "left",
-                  }}
-                >
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-data)",
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    ID
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-data)",
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    STATUS
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-data)",
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                      textAlign: "right",
-                    }}
-                  >
-                    TOTAL
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-data)",
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    CREATED
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-data)",
-                      fontSize: 10,
-                      letterSpacing: "0.06em",
-                      textAlign: "right",
-                    }}
-                  >
-                    RECEIPT
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {sessions.map((s, idx) => (
+          <>
+            <div className="surface-card" style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
                   <tr
-                    key={s.id}
                     style={{
                       borderBottom: "1px solid var(--border)",
-                      background: idx % 2 ? "var(--bg-row-alt)" : "transparent",
+                      textAlign: "left",
                     }}
                   >
-                    <td
+                    <th
                       style={{
                         padding: "10px 12px",
+                        color: "var(--text-muted)",
                         fontFamily: "var(--font-data)",
-                        fontSize: 11,
-                        color: "var(--text-secondary)",
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
                       }}
                     >
-                      {s.id}
-                    </td>
-                    <td
+                      ID
+                    </th>
+                    <th
                       style={{
                         padding: "10px 12px",
-                        color: "var(--text-primary)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {s.status}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "right",
+                        color: "var(--text-muted)",
                         fontFamily: "var(--font-data)",
-                        color: "var(--green-vivid)",
-                        fontWeight: 600,
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
                       }}
                     >
-                      {Number(s.total || 0).toFixed(3)} TND
-                    </td>
-                    <td
+                      STATUS
+                    </th>
+                    <th
                       style={{
                         padding: "10px 12px",
-                        color: "var(--text-secondary)",
-                        fontSize: 12,
-                      }}
-                    >
-                      {new Date(s.created_at).toLocaleString()}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
+                        color: "var(--text-muted)",
+                        fontFamily: "var(--font-data)",
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
                         textAlign: "right",
                       }}
                     >
-                      <div
+                      TOTAL
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        color: "var(--text-muted)",
+                        fontFamily: "var(--font-data)",
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      CREATED
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 12px",
+                        color: "var(--text-muted)",
+                        fontFamily: "var(--font-data)",
+                        fontSize: 10,
+                        letterSpacing: "0.06em",
+                        textAlign: "right",
+                      }}
+                    >
+                      RECEIPT
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {sessions.map((s, idx) => (
+                    <tr
+                      key={s.id}
+                      style={{
+                        borderBottom: "1px solid var(--border)",
+                        background:
+                          idx % 2 ? "var(--bg-row-alt)" : "transparent",
+                      }}
+                    >
+                      <td
                         style={{
-                          display: "inline-flex",
-                          gap: 8,
-                          justifyContent: "flex-end",
+                          padding: "10px 12px",
+                          fontFamily: "var(--font-data)",
+                          fontSize: 11,
+                          color: "var(--text-secondary)",
                         }}
                       >
-                        <button
-                          type="button"
-                          className="btn btn-ghost"
-                          disabled={!s.receipt_items?.length}
-                          onClick={() => printReceipt(s)}
-                          style={{ padding: "5px 10px", fontSize: 11 }}
+                        {s.id}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "var(--text-primary)",
+                          fontSize: 12,
+                        }}
+                      >
+                        {s.status}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          textAlign: "right",
+                          fontFamily: "var(--font-data)",
+                          color: "var(--green-vivid)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {Number(s.total || 0).toFixed(3)} TND
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          color: "var(--text-secondary)",
+                          fontSize: 12,
+                        }}
+                      >
+                        {new Date(s.created_at).toLocaleString()}
+                      </td>
+                      <td
+                        style={{
+                          padding: "10px 12px",
+                          textAlign: "right",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            gap: 8,
+                            justifyContent: "flex-end",
+                          }}
                         >
-                          Print
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          disabled={!s.receipt_items?.length}
-                          onClick={() => downloadReceipt(s)}
-                          style={{ padding: "5px 10px", fontSize: 11 }}
-                        >
-                          Download
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            disabled={!s.receipt_items?.length}
+                            onClick={() => printReceipt(s)}
+                            style={{ padding: "5px 10px", fontSize: 11 }}
+                          >
+                            Print
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={!s.receipt_items?.length}
+                            onClick={() => downloadReceipt(s)}
+                            style={{ padding: "5px 10px", fontSize: 11 }}
+                          >
+                            Download
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {confidenceItems.length ? (
+              <div className="surface-card" style={{ marginTop: 14 }}>
+                <div
+                  className="history-title"
+                  style={{ padding: "14px 14px 0" }}
+                >
+                  CONFIDENCE ANALYTICS
+                </div>
+                <div style={{ padding: "0 14px 14px" }}>
+                  <p
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: 12,
+                      marginBottom: 10,
+                    }}
+                  >
+                    Uses real model confidence stored in receipt_raw. No
+                    hardcoded fallback values.
+                  </p>
+                  <ul style={{ listStyle: "none", display: "grid", gap: 6 }}>
+                    {confidenceItems.slice(0, 12).map((item, index) => (
+                      <li
+                        key={`${item.label}-${index}`}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          padding: "8px 10px",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--r8)",
+                          background: "var(--bg-input)",
+                          fontFamily: "var(--font-data)",
+                        }}
+                      >
+                        <span>{item.label.replace(/_/g, " ")}</span>
+                        <strong>{(item.confidence * 100).toFixed(1)}%</strong>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>
