@@ -47,6 +47,7 @@ async def run_inference(session_id: str, video_path: str) -> None:
                 frame_skip=settings.frame_skip,
             )
             checkout = StaticSceneCheckout(cfg, PRICES)
+            checkout.verbose = settings.verbose_output
 
             cap = cv2.VideoCapture(video_path)
             if not cap.isOpened():

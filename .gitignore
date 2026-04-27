@@ -15,6 +15,7 @@ build/
 !.env.example
 
 # Model weights (stored in GCS, not git)
+*.zip
 *.pt
 *.onnx
 weights/

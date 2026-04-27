@@ -17,6 +17,7 @@ from ..services.receipt import apply_override
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 logger = logging.getLogger(__name__)
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MiB
 
 
 async def _load_session_with_items(db: AsyncSession, session_id: str) -> Session | None:
@@ -45,12 +46,18 @@ async def process_video(
     await db.refresh(session)
 
     suffix = Path(file.filename).suffix if file.filename else ".mp4"
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    content = await file.read()
-    tmp.write(content)
-    tmp.close()
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            while True:
+                chunk = await file.read(UPLOAD_CHUNK_SIZE)
+                if not chunk:
+                    break
+                tmp.write(chunk)
+            tmp_path = tmp.name
+    finally:
+        await file.close()
 
-    background_tasks.add_task(run_inference, session.id, tmp.name)
+    background_tasks.add_task(run_inference, session.id, tmp_path)
     loaded = await _load_session_with_items(db, session.id)
     return loaded or session
 

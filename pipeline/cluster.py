@@ -12,7 +12,25 @@ def _dist(a: tuple[float, float], b: tuple[float, float]) -> float:
 
 
 class ClusterTracker:
-    """Groups same-class detections by centroid proximity across frames."""
+    """
+    Groups same-class detections by centroid proximity across frames (optional).
+
+    Used by StaticSceneCheckout when use_spatial_tracking=True to track individual
+    objects across consecutive frames. This provides:
+
+    - **Cluster stability:** Objects that move slightly between frames keep the same ID
+    - **EMA smoothing:** Cluster centroids use exponential moving average for stability
+    - **Timeout handling:** Clusters that disappear for max_lost frames are pruned
+
+    **Usage:**
+        tracker = ClusterTracker(dist_threshold=80.0, ema_alpha=0.5, max_lost=10)
+        for frame in video:
+            detections = [...get from YOLO...]
+            tracked = tracker.update(detections)  # Returns (cluster_id, box) tuples
+
+    **Note:** This is optional. The main confirmation system uses temporal frame-hit
+    accumulation (class_conf_history) regardless of spatial tracking.
+    """
 
     def __init__(
         self,
@@ -20,6 +38,14 @@ class ClusterTracker:
         ema_alpha: float = 0.5,
         max_lost: int = 10,
     ) -> None:
+        """
+        Initialize cluster tracker.
+
+        Args:
+            dist_threshold: Max centroid distance to match cluster (pixels)
+            ema_alpha: EMA weight for centroid smoothing (0.5 = equal weight old/new)
+            max_lost: Frames to keep unmatched cluster before pruning
+        """
         self._clusters: dict[int, dict] = {}
         self._next_id = 0
         self.dist_threshold = dist_threshold
@@ -27,7 +53,18 @@ class ClusterTracker:
         self.max_lost = max_lost
 
     def update(self, boxes: list[list]) -> list[tuple[int, list]]:
-        """Match boxes to clusters. Returns (cluster_id, box) per box."""
+        """
+        Match boxes to existing clusters and return tracked detections.
+
+        Boxes that move less than dist_threshold pixels are matched to existing clusters.
+        New boxes create new clusters. Unmatched clusters increment lost counter.
+
+        Args:
+            boxes: List of [x1, y1, x2, y2] bounding boxes
+
+        Returns:
+            List of (cluster_id, box) tuples matching input boxes
+        """
         for c in self._clusters.values():
             c["lost"] += 1
 
@@ -66,11 +103,11 @@ class ClusterTracker:
         return result
 
     def confirmed_count(self, min_hits: int) -> int:
-        """Return number of clusters with hits >= min_hits."""
+        """Return number of clusters with hits >= min_hits (i.e., confirmed objects)."""
         return sum(1 for c in self._clusters.values() if c["hits"] >= min_hits)
 
     def any_confirmed(self, min_hits: int) -> bool:
-        """Return True if any cluster is confirmed."""
+        """Return True if any cluster has hits >= min_hits (i.e., any object confirmed)."""
         return self.confirmed_count(min_hits) > 0
 
     @property

@@ -5,6 +5,11 @@ export function VideoUpload({ onUpload, uploading, progress = 0 }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
 
+  function handleCardClick(e) {
+    if (e.target !== e.currentTarget) return;
+    inputRef.current?.click();
+  }
+
   function handleDrop(e) {
     e.preventDefault();
     setDragging(false);
@@ -30,7 +35,7 @@ export function VideoUpload({ onUpload, uploading, progress = 0 }) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={handleCardClick}
         className={`upload-card ${dragging ? "dragging" : ""}`}
       >
         <svg
