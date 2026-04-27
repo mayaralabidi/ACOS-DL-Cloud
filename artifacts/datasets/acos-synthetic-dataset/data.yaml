@@ -1,0 +1,7 @@
+
+path: /kaggle/working/data
+train: images
+val: images
+
+nc: 45
+names: ['choco_esprit_de_fete', 'milk_delice', 'juice_diva', 'soapbar_dove_shea', 'butter_jadida', 'vanillinatedsugar', 'disinfectant_cnett', 'cocoapowder', 'pril', 'conditioner_avilea', 'showergel', 'riso_scotti', 'flour', 'yogurt_danette', 'choc', 'pasta_spaghetti', 'rice', 'bathfoam_malizia', 'soapbar_dove_lavender', 'dryyeast_smartchef', 'butter_delice', 'judy', 'carolin', 'vinegar', 'dryyeast_lapatissiere', 'choco_coating', 'toothpaste_colgate', 'shampoo_elseve_hya', 'bakingpowder', 'pasta_fell', 'teabags_camomilia', 'chocoline', 'pasta_canelloni', 'yogurt_delice', 'coffee_bondin', 'chantilly_vanoise', 'shampoo_elseve_gly', 'shampoo_elvive', 'orzo', 'soap_lilas', 'mustard', 'harissa', 'liquidsoap_naya', 'chocospread_vanoise', 'canned_peas']

@@ -1,0 +1,127 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGION: europe-west1
+  GAR_HOSTNAME: europe-west1-docker.pkg.dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run pytest
+        run: pytest tests/ -v --tb=short
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_HOSTNAME }} --quiet
+      - name: Build and push API image
+        run: |
+          IMAGE=${{ env.GAR_HOSTNAME }}/${{ secrets.GCP_PROJECT_DEV }}/checkout/api
+          docker build -t $IMAGE:${{ steps.sha.outputs.sha }} -t $IMAGE:latest -f api/Dockerfile .
+          docker push $IMAGE:${{ steps.sha.outputs.sha }}
+          docker push $IMAGE:latest
+      - name: Build and push frontend image
+        run: |
+          IMAGE=${{ env.GAR_HOSTNAME }}/${{ secrets.GCP_PROJECT_DEV }}/checkout/frontend
+          docker build -t $IMAGE:${{ steps.sha.outputs.sha }} -t $IMAGE:latest \
+            --build-arg VITE_API_BASE_URL=${{ secrets.DEV_API_URL }} \
+            frontend/
+          docker push $IMAGE:${{ steps.sha.outputs.sha }}
+          docker push $IMAGE:latest
+
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: checkout-dev
+          location: ${{ env.REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_DEV }}
+      - name: Apply manifests
+        run: kubectl apply -f k8s/dev/
+      - name: Update image tags
+        run: |
+          SHA=${{ needs.build.outputs.sha }}
+          REG=${{ env.GAR_HOSTNAME }}/${{ secrets.GCP_PROJECT_DEV }}/checkout
+          kubectl set image deployment/api api=$REG/api:$SHA -n dev
+          kubectl set image deployment/frontend frontend=$REG/frontend:$SHA -n dev
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/api -n dev --timeout=5m
+          kubectl rollout status deployment/frontend -n dev --timeout=5m
+
+  deploy-test:
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: checkout-test
+          location: ${{ env.REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_TEST }}
+      - name: Apply manifests and update images
+        run: |
+          kubectl apply -f k8s/test/
+          SHA=${{ needs.build.outputs.sha }}
+          REG=${{ env.GAR_HOSTNAME }}/${{ secrets.GCP_PROJECT_DEV }}/checkout
+          kubectl set image deployment/api api=$REG/api:$SHA -n test
+          kubectl set image deployment/frontend frontend=$REG/frontend:$SHA -n test
+          kubectl rollout status deployment/api -n test --timeout=5m
+          kubectl rollout status deployment/frontend -n test --timeout=5m
+
+  deploy-prod:
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: checkout-prod
+          location: ${{ env.REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_PROD }}
+      - name: Apply manifests and update images
+        run: |
+          kubectl apply -f k8s/prod/
+          SHA=${{ needs.build.outputs.sha }}
+          REG=${{ env.GAR_HOSTNAME }}/${{ secrets.GCP_PROJECT_DEV }}/checkout
+          kubectl set image deployment/api api=$REG/api:$SHA -n prod
+          kubectl set image deployment/frontend frontend=$REG/frontend:$SHA -n prod
+          kubectl rollout status deployment/api -n prod --timeout=10m
+          kubectl rollout status deployment/frontend -n prod --timeout=10m
