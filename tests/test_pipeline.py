@@ -79,12 +79,12 @@ from pipeline.config import PipelineConfig
 
 
 def create_test_frame(h=1080, w=1920, color=(50, 50, 50)):
-    \"\"\"Create a dummy test frame.\"\"\"
+    """Create a dummy test frame."""
     return np.full((h, w, 3), color, dtype=np.uint8)
 
 
 def create_mock_config(**overrides):
-    \"\"\"Create a test PipelineConfig with dummy model path.\"\"\"
+    """Create a test PipelineConfig with dummy model path."""
     defaults = {
         "model_path": "tests/dummy_model.pt",
         "multi_instance": False,
@@ -102,7 +102,7 @@ def create_mock_config(**overrides):
 
 
 def test_checkout_init():
-    \"\"\"Test StaticSceneCheckout initialization.\"\"\"
+    """Test StaticSceneCheckout initialization."""
     cfg = create_mock_config()
     prices = {"milk_delice": 1.35, "juice_diva": 3.5}
     
@@ -118,7 +118,7 @@ def test_checkout_init():
 
 
 def test_conf_threshold_global():
-    \"\"\"Test global confidence threshold (no override).\"\"\"
+    """Test global confidence threshold (no override)."""
     cfg = create_mock_config(conf_threshold=0.40)
     prices = {}
     
@@ -130,7 +130,7 @@ def test_conf_threshold_global():
 
 
 def test_conf_threshold_override():
-    \"\"\"Test per-class confidence override.\"\"\"
+    """Test per-class confidence override."""
     cfg = create_mock_config(
         conf_threshold=0.40,
         class_conf_overrides={"soapbar_dove_shea": 0.25}
@@ -146,7 +146,7 @@ def test_conf_threshold_override():
 
 
 def test_min_frames_global():
-    \"\"\"Test global minimum frames threshold (no override).\"\"\"
+    """Test global minimum frames threshold (no override)."""
     cfg = create_mock_config(min_confirm_frames=6)
     prices = {}
     
@@ -158,7 +158,7 @@ def test_min_frames_global():
 
 
 def test_min_frames_override():
-    \"\"\"Test per-class minimum frames override.\"\"\"
+    """Test per-class minimum frames override."""
     cfg = create_mock_config(
         min_confirm_frames=6,
         min_frames_overrides={"soapbar_dove_shea": 3}
@@ -174,7 +174,7 @@ def test_min_frames_override():
 
 
 def test_receipt_calculation_single_item():
-    \"\"\"Test receipt calculation with a single confirmed item.\"\"\"
+    """Test receipt calculation with a single confirmed item."""
     cfg = create_mock_config(multi_instance=False, min_confirm_frames=1)
     prices = {"milk_delice": 1.35}
     
@@ -195,7 +195,7 @@ def test_receipt_calculation_single_item():
 
 
 def test_receipt_calculation_multiple_items():
-    \"\"\"Test receipt calculation with multiple items.\"\"\"
+    """Test receipt calculation with multiple items."""
     cfg = create_mock_config(multi_instance=False, min_confirm_frames=1)
     prices = {"milk_delice": 1.35, "juice_diva": 3.5}
     
@@ -213,7 +213,7 @@ def test_receipt_calculation_multiple_items():
 
 
 def test_receipt_multi_instance_counting():
-    \"\"\"Test multi-instance counting (qty based on max simultaneous).\"\"\"
+    """Test multi-instance counting (qty based on max simultaneous)."""
     cfg = create_mock_config(multi_instance=True, min_confirm_frames=1)
     prices = {"milk_delice": 1.35}
     
@@ -231,7 +231,7 @@ def test_receipt_multi_instance_counting():
 
 
 def test_receipt_qty_override():
-    \"\"\"Test fixed quantity override.\"\"\"
+    """Test fixed quantity override."""
     cfg = create_mock_config(
         multi_instance=True,
         min_confirm_frames=1,
@@ -253,7 +253,7 @@ def test_receipt_qty_override():
 
 
 def test_receipt_unconfirmed_excluded():
-    \"\"\"Test that unconfirmed items (below min_frames) are excluded.\"\"\"
+    """Test that unconfirmed items (below min_frames) are excluded."""
     cfg = create_mock_config(min_confirm_frames=6)
     prices = {"milk_delice": 1.35, "juice_diva": 3.5}
     
@@ -271,7 +271,7 @@ def test_receipt_unconfirmed_excluded():
 
 
 def test_receipt_diagnostics_structure():
-    \"\"\"Test that diagnostics are included in receipt.\"\"\"
+    """Test that diagnostics are included in receipt."""
     cfg = create_mock_config(min_confirm_frames=6)
     prices = {"milk_delice": 1.35}
     
@@ -295,7 +295,7 @@ def test_receipt_diagnostics_structure():
 
 
 def test_receipt_diagnostics_confirmed_status():
-    \"\"\"Test diagnostics show OK for confirmed items.\"\"\"
+    """Test diagnostics show OK for confirmed items."""
     cfg = create_mock_config(min_confirm_frames=3)
     prices = {"milk_delice": 1.35}
     
@@ -312,7 +312,7 @@ def test_receipt_diagnostics_confirmed_status():
 
 
 def test_receipt_average_confidence():
-    \"\"\"Test average confidence calculation in diagnostics.\"\"\"
+    """Test average confidence calculation in diagnostics."""
     cfg = create_mock_config(min_confirm_frames=1)
     prices = {"milk_delice": 1.35}
     
@@ -329,7 +329,7 @@ def test_receipt_average_confidence():
 
 
 def test_receipt_missing_price():
-    \"\"\"Test receipt calculation when product price is missing.\"\"\"
+    """Test receipt calculation when product price is missing."""
     cfg = create_mock_config(min_confirm_frames=1)
     prices = {}  # Empty price dict
     
@@ -347,7 +347,7 @@ def test_receipt_missing_price():
 
 
 def test_stats_in_receipt():
-    \"\"\"Test that stats are included in receipt.\"\"\"
+    """Test that stats are included in receipt."""
     cfg = create_mock_config()
     prices = {}
     
@@ -371,7 +371,7 @@ def test_stats_in_receipt():
 
 
 def test_verbose_flag():
-    \"\"\"Test that verbose flag can be set.\"\"\"
+    """Test that verbose flag can be set."""
     cfg = create_mock_config()
     prices = {}
     
