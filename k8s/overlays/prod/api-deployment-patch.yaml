@@ -5,7 +5,7 @@ metadata:
   labels:
     env: prod
 spec:
-  replicas: 3
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
