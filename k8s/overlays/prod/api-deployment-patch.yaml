@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    env: prod
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    spec:
+      containers:
+        - name: api
+          image: gcr.io/acos-dl/checkout-backend:v1
+          args:
+            - uvicorn
+            - api.main:app
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+            - --workers
+            - "1"
+            - --log-level
+            - warning

@@ -370,16 +370,6 @@ export function HistoryPage() {
                   CONFIDENCE ANALYTICS
                 </div>
                 <div style={{ padding: "0 14px 14px" }}>
-                  <p
-                    style={{
-                      color: "var(--text-muted)",
-                      fontSize: 12,
-                      marginBottom: 10,
-                    }}
-                  >
-                    Uses real model confidence stored in receipt_raw. No
-                    hardcoded fallback values.
-                  </p>
                   <ul style={{ listStyle: "none", display: "grid", gap: 6 }}>
                     {confidenceItems.slice(0, 12).map((item, index) => (
                       <li

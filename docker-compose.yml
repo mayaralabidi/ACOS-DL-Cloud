@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: checkout-postgres
+    environment:
+      POSTGRES_DB: checkout_dev
+      POSTGRES_USER: checkout
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkout -d checkout_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: checkout-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://checkout:password@postgres:5432/checkout_dev
+      APP_ENV: dev
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
+      API_HOST: 0.0.0.0
+      API_PORT: 8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/health')\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: checkout-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  pgdata:

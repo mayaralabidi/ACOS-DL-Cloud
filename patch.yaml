@@ -1,0 +1,8 @@
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          env:
+            - name: DATABASE_URL
+              value: "postgresql+asyncpg://checkout:password@checkout-postgres.dev.svc.cluster.local:5432/checkout_dev?ssl=disable"

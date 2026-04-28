@@ -2,7 +2,7 @@
 ultralytics==8.4.33
 opencv-python-headless==4.13.0.92
 numpy==2.0.2
-scipy==1.16.3
+scipy==1.13.1
 
 # API
 fastapi==0.115.0
@@ -25,3 +25,6 @@ pytest==8.3.0
 pytest-asyncio==0.25.3
 httpx==0.27.0
 aiosqlite==0.20.0
+
+# Pinned transitive deps
+pycparser==2.22

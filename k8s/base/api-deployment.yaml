@@ -1,11 +1,9 @@
-﻿apiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api
-  namespace: test
   labels:
     app: api
-    env: test
 spec:
   replicas: 1
   selector:
@@ -19,7 +17,7 @@ spec:
       serviceAccountName: checkout-sa
       containers:
         - name: api
-          image: REGION-docker.pkg.dev/checkout-test/checkout/api:latest
+          image: REGION-docker.pkg.dev/checkout-dev/checkout/api:latest
           ports:
             - containerPort: 8080
           envFrom:
@@ -33,11 +31,11 @@ spec:
                   key: DATABASE_URL
           resources:
             requests:
-              cpu: "250m"
-              memory: "512Mi"
+              cpu: "100m"
+              memory: "256Mi"
             limits:
-              cpu: "1000m"
-              memory: "2Gi"
+              cpu: "500m"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
               path: /health

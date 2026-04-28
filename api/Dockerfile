@@ -3,11 +3,15 @@ FROM python:3.11-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
+    build-essential git ffmpeg libsndfile1 \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+    libopenblas-dev liblapack-dev gfortran libjpeg-dev zlib1g-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --upgrade pip setuptools wheel
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 
 COPY pipeline/ ./pipeline/
 COPY api/ ./api/

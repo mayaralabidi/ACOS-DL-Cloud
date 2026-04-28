@@ -30,3 +30,30 @@ If you already created `.venv` with Python 3.13, delete it and recreate it with 
 ## Validation
 
 The current workspace passes `pytest tests -q`.
+
+## Secrets
+
+Do not commit real credentials or database URLs to GitHub.
+
+The application reads `DATABASE_URL` from the environment, so inject secrets at deploy time instead of storing them in Kubernetes YAML.
+
+Examples:
+
+```powershell
+# Dev namespace: create the in-cluster Postgres credentials before applying the overlay
+kubectl create secret generic checkout-secrets -n dev `
+	--from-literal=POSTGRES_USER=checkout `
+	--from-literal=POSTGRES_PASSWORD=<dev-password> `
+	--from-literal=POSTGRES_DB=checkout `
+	--from-literal=DATABASE_URL=postgresql+asyncpg://checkout:<dev-password>@checkout-postgres.dev.svc.cluster.local:5432/checkout
+
+# Test namespace: point to the test database endpoint
+kubectl create secret generic checkout-secrets -n test `
+	--from-literal=DATABASE_URL=<test-database-url>
+
+# Prod namespace: point to the production database endpoint
+kubectl create secret generic checkout-secrets -n prod `
+	--from-literal=DATABASE_URL=<prod-database-url>
+```
+
+If you use Secret Manager or External Secrets, keep the repo free of the real values and sync them into the cluster during deploy.
