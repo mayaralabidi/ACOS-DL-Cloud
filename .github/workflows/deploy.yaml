@@ -43,11 +43,22 @@ jobs:
           docker build -t $IMAGE:${{ steps.sha.outputs.sha }} -t $IMAGE:latest -f api/Dockerfile .
           docker push $IMAGE:${{ steps.sha.outputs.sha }}
           docker push $IMAGE:latest
-      - name: Build and push frontend image
+      - name: Build and push frontend image (dev)
+        if: github.ref_name == 'dev'
         run: |
           IMAGE=gcr.io/${{ env.PROJECT_ID }}/checkout-frontend
           docker build -t $IMAGE:${{ steps.sha.outputs.sha }} -t $IMAGE:latest \
             --build-arg VITE_API_BASE_URL=${{ secrets.DEV_API_URL }} \
+            frontend/
+          docker push $IMAGE:${{ steps.sha.outputs.sha }}
+          docker push $IMAGE:latest
+
+      - name: Build and push frontend image (prod)
+        if: github.ref_name == 'main'
+        run: |
+          IMAGE=gcr.io/${{ env.PROJECT_ID }}/checkout-frontend
+          docker build -t $IMAGE:${{ steps.sha.outputs.sha }} -t $IMAGE:latest \
+            --build-arg VITE_API_BASE_URL=${{ secrets.PROD_API_URL }} \
             frontend/
           docker push $IMAGE:${{ steps.sha.outputs.sha }}
           docker push $IMAGE:latest
