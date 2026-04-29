@@ -1,43 +1,129 @@
+WELCOME TO OUR FIRST DEEP LEARNING PROJECT ヾ(＠⌒ー⌒＠)ノ
+
 # ACOS-DL-Cloud
 
-Automatic supermarket checkout system built with a YOLOv11m pipeline, FastAPI backend, and React dashboard.
+ACOS-DL-Cloud is an automatic supermarket checkout system that combines a YOLO-based computer vision pipeline, a FastAPI backend, and a React dashboard. The application tracks items from video, builds receipt data, and lets users review and confirm checkout sessions.
 
-## What’s included
+Authors:
 
-- Python ML pipeline for cross-class NMS and spatial cluster tracking
-- FastAPI backend for session processing, overrides, and confirmation
-- React + Vite frontend for video upload, receipt review, and history
-- Alembic migrations, Dockerfiles, Kubernetes manifests, and GitHub Actions CI/CD
+- Mayara Labidi
+- Roua Khribiche
 
-## Quick start
+## Overview
 
-1. Use Python 3.12 for this project. On Windows, create the venv with `py -3.12 -m venv .venv`.
-2. Activate it with `.venv\Scripts\Activate.ps1` and make sure `pip --version` points to `.venv`.
-3. Install dependencies with `python -m pip install -r requirements.txt`.
-4. Copy `.env.example` to `.env` and set `DATABASE_URL` and any GCP values you need.
-5. Run the test suite with `python -m pytest tests -q`.
+The project is organized around three layers:
 
-If you already created `.venv` with Python 3.13, delete it and recreate it with Python 3.12. NumPy and the rest of the stack are pinned for the supported 3.12 environment.
+- `pipeline/` implements the detection, tracking, clustering, and pricing logic.
+- `api/` exposes the FastAPI service for sessions, products, health checks, and confirmation workflows.
+- `frontend/` provides the cashier-style interface for uploads, review, and history.
 
-## Project layout
+The repository also includes Alembic migrations, Dockerfiles, Kubernetes manifests, and a GitHub Actions workflow for build and deployment.
 
-- `pipeline/` contains the detection pipeline and pricing table.
-- `api/` contains the FastAPI app, ORM models, schemas, and services.
-- `frontend/` contains the cashier dashboard.
-- `migrations/` contains the Alembic migration bootstrap.
-- `k8s/` contains environment-specific deployment manifests.
+## Key Features
 
-## Validation
+- Video-based product detection and receipt generation.
+- Session review with overrides and confirmation.
+- FastAPI backend with CORS, database initialization, and health endpoints.
+- React + Vite frontend for a responsive operator dashboard.
+- Docker, Kubernetes, and CI/CD support for local and cloud deployment.
 
-The current workspace passes `pytest tests -q`.
+## Quick Start
+
+The fastest way to run the project locally is with Docker Compose.
+
+1. Install Docker Desktop and make sure Docker Compose is available.
+2. Create your environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+3. Update `.env` with at least `DATABASE_URL`. If you are running locally with Compose, you can use a PostgreSQL connection string that matches the bundled database service.
+4. Start the application:
+
+```powershell
+docker compose up --build
+```
+
+5. Open the frontend at http://localhost:3000.
+6. Check the API health endpoint at http://localhost:8080/health.
+
+## Local Development
+
+If you prefer running services separately:
+
+### Backend
+
+1. Use Python 3.12.
+2. Create and activate a virtual environment:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+3. Install dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+4. Start the API:
+
+```powershell
+uvicorn api.main:app --host 0.0.0.0 --port 8080 --reload
+```
+
+### Frontend
+
+1. Install dependencies:
+
+```powershell
+cd frontend
+npm install
+```
+
+2. Start the development server:
+
+```powershell
+npm run dev
+```
+
+By default the Vite app runs on http://localhost:5173.
+
+## Environment Variables
+
+The backend reads settings from the environment or a local `.env` file. The most important value is `DATABASE_URL`.
+
+Common settings include:
+
+- `DATABASE_URL` - required PostgreSQL connection string.
+- `APP_ENV` - runtime mode such as `dev`, `test`, or `prod`.
+- `LOG_LEVEL` - log verbosity.
+- `CORS_ORIGINS` - comma-separated frontend origins allowed to call the API.
+- `GCP_PROJECT_ID`, `GCS_BUCKET_NAME`, `GCS_MODEL_PATH`, `GCS_VIDEO_BUCKET` - optional cloud storage and model settings.
+
+## Deployment
+
+The Kubernetes manifests under `k8s/` support environment-specific deployment overlays for `dev`, `test`, and `prod`. The GitHub Actions workflow builds the backend and frontend images, then deploys to the matching namespace when code is pushed to the corresponding branch:
+
+- `dev` branch deploys to the dev namespace.
+- `staging` branch deploys to the test namespace.
+- `main` branch deploys to production.
+
+In production, the frontend service is exposed through a Kubernetes `LoadBalancer`. After deployment, find the external IP with:
+
+```powershell
+kubectl get svc frontend-service -n prod
+```
+
+Share the external IP with your classmates so they can open the dashboard in a browser. The API service is also exposed in prod and is typically used by the frontend rather than accessed directly.
 
 ## Secrets
 
-Do not commit real credentials or database URLs to GitHub.
+Do not commit real credentials or database URLs to GitHub. Inject secrets at deploy time instead of storing them in Kubernetes YAML.
 
-The application reads `DATABASE_URL` from the environment, so inject secrets at deploy time instead of storing them in Kubernetes YAML.
-
-Examples:
+Example commands:
 
 ```powershell
 # Dev namespace: create the in-cluster Postgres credentials before applying the overlay
@@ -56,4 +142,14 @@ kubectl create secret generic checkout-secrets -n prod `
 	--from-literal=DATABASE_URL=<prod-database-url>
 ```
 
-If you use Secret Manager or External Secrets, keep the repo free of the real values and sync them into the cluster during deploy.
+If you use Secret Manager or External Secrets, keep the repository free of live values and sync them into the cluster during deploy.
+
+## Validation
+
+Run the test suite with:
+
+```powershell
+python -m pytest tests -q
+```
+
+The current workspace passes this test command.
