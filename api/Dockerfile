@@ -17,9 +17,7 @@ COPY pipeline/ ./pipeline/
 COPY api/ ./api/
 COPY migrations/ ./migrations/
 
-RUN mkdir -p /app/weights
-
-RUN useradd -m appuser
+RUN useradd -m appuser && mkdir -p /app/weights && chown -R appuser:appuser /app/weights
 USER appuser
 
 ENV PYTHONUNBUFFERED=1
