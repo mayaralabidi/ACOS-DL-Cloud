@@ -172,8 +172,7 @@ export function HistoryPage() {
 
   useEffect(() => {
     let mounted = true;
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
     (async () => {
       try {
         const response = await fetch(`${baseUrl}/health`);

@@ -1,0 +1,5 @@
+FROM gcr.io/acos-dl/checkout-backend:26c5dac
+USER root
+COPY best.pt /tmp/best.pt
+RUN chmod 644 /tmp/best.pt
+USER appuser
